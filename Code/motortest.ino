@@ -1,73 +1,40 @@
-/* Example sketch to control a stepper motor with 
-   A4988/DRV8825 stepper motor driver and 
-   Arduino without a library. 
-   More info: https://www.makerguides.com */
+// Define the connections for the right motor
+#define dirPinRight 2
+#define stepPinRight 3
 
-// Define stepper motor connections and steps per revolution:
-#define dirPin 2
-#define stepPin 3
+// Define the connections for the left motor
+#define dirPinLeft 4
+#define stepPinLeft 5
+
+// Define the steps per revolution (200 for standard NEMA 17 with 1.8° step angle)
 #define stepsPerRevolution 200
 
 void setup() {
-  // Declare pins as output:
-  pinMode(stepPin, OUTPUT);
-  pinMode(dirPin, OUTPUT);
+  // Set the motor control pins as outputs
+  pinMode(stepPinRight, OUTPUT);
+  pinMode(dirPinRight, OUTPUT);
+  pinMode(stepPinLeft, OUTPUT);
+  pinMode(dirPinLeft, OUTPUT);
+
+  // Set initial direction for both motors
+  digitalWrite(dirPinRight, HIGH); // Set the right motor direction to forward
+  digitalWrite(dirPinLeft, LOW);  // Set the left motor direction to forward
 }
 
 void loop() {
-  // Set the spinning direction clockwise:
-  digitalWrite(dirPin, HIGH);
-
-  // Spin the stepper motor 1 revolution slowly:
+  // Spin the right motor
   for (int i = 0; i < stepsPerRevolution; i++) {
-    // These four lines result in 1 step:
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(2000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(2000);
+    digitalWrite(stepPinRight, HIGH);
+    delayMicroseconds(1000); // Adjust delay to control speed
+    digitalWrite(stepPinRight, LOW);
+    delayMicroseconds(1000); // Adjust delay to control speed
   }
 
-  delay(1000);
-
-  // Set the spinning direction counterclockwise:
-  digitalWrite(dirPin, LOW);
-
-  // Spin the stepper motor 1 revolution quickly:
+  // Spin the left motor
   for (int i = 0; i < stepsPerRevolution; i++) {
-    // These four lines result in 1 step:
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(1000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(1000);
+    digitalWrite(stepPinLeft, HIGH);
+    delayMicroseconds(1000); // Adjust delay to control speed
+    digitalWrite(stepPinLeft, LOW);
+    delayMicroseconds(1000); // Adjust delay to control speed
   }
-
-  delay(1000);
-
-  // Set the spinning direction clockwise:
-  digitalWrite(dirPin, HIGH);
-
-  // Spin the stepper motor 5 revolutions fast:
-  for (int i = 0; i < 5 * stepsPerRevolution; i++) {
-    // These four lines result in 1 step:
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
-  }
-
-  delay(1000);
-
-  // Set the spinning direction counterclockwise:
-  digitalWrite(dirPin, LOW);
-
-  //Spin the stepper motor 5 revolutions fast:
-  for (int i = 0; i < 5 * stepsPerRevolution; i++) {
-    // These four lines result in 1 step:
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
-  }
-
-  delay(1000);
 }
