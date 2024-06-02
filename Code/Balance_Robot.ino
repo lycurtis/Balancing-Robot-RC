@@ -1,13 +1,10 @@
 #include <Wire.h>
 #include "MPU6050.h"
-#include "IntervalTimer.h"
+#include <IntervalTimer.h>
+
+IntervalTimer myTimer;
 
 MPU6050 mpu;
-
-#define TOTAL_TASK 2
-#define PERIOD_GCD 1000
-#define PERIOD_MOTORR 1000
-#define PERIOD_MOTORL 1000
 
 // Motor direction and step pins
 #define dirPinR 2
@@ -15,7 +12,6 @@ MPU6050 mpu;
 #define dirPinL 4
 #define stepPinL 5
 
-#define stepsPerRevolution 200
 
 // PID scalar constants
 float Kp = 10.0;
@@ -27,156 +23,15 @@ float setPoint  = 0.0; // Desired angle (upright)
 // Global variables necessary for PID control system (for later calculations)
 float currentAngle, error, prevError, proportional, integral, derivative, motorSpeedL, motorSpeedR;
 
+int takenStepR = 0;
+
 const int numReadings = 500;
 float rollOffset = 0.0;
 float pitchOffset = 0.0;
 
-int takenStepR = 0;
-int takenStepL = 0;
-
-IntervalTimer myTimer;
-
-typedef struct task {
-  unsigned short period;
-  unsigned short timeElapsed;
-  void (*tick)(void);
-} task;
-
-static task gTaskSet[TOTAL_TASK];
-
-void initializeTask(void) {
-  gTaskSet[0].period = PERIOD_MOTORR;
-  gTaskSet[0].timeElapsed = 0;
-  gTaskSet[0].tick = tickControlR;
-
-  gTaskSet[1].period = PERIOD_MOTORL;
-  gTaskSet[1].timeElapsed = 0;
-  gTaskSet[1].tick = tickControlL;
-}
-
-void scheduleTask() {
-  for (int i = 0; i < TOTAL_TASK; i++) {
-    gTaskSet[i].timeElapsed += PERIOD_GCD;
-    if (gTaskSet[i].timeElapsed >= gTaskSet[i].period) {
-      gTaskSet[i].tick();
-      gTaskSet[i].timeElapsed = 0;
-    }
-  }
-}
-
-enum STATES_CONTROLR {INIT, IDLE, FORWARD, BACKWARD, TURNL, TURNR, QUIT} rState = INIT;
-enum STATES_CONTROLL {INIT1, IDLE1, FORWARD1, BACKWARD1, TURNL1, TURNR1, QUIT1} lState = INIT1;
-
-void tickControlR(void) {
-  switch (rState) {
-    case INIT:
-      if (1) {
-        rState = IDLE;
-      }
-      break;
-    case IDLE:
-      break;
-    case FORWARD:
-      break;
-    case BACKWARD:
-      break;
-    case TURNL:
-      break;
-    case TURNR:
-      break;
-    case QUIT:
-      break;
-    // Add other states and their actions
-    default:
-      rState = IDLE;
-      break;
-  }
-
-  switch(rState){
-    case INIT:
-      break;
-    case IDLE:
-      if(motorSpeedR < 0){
-        //forward pitch
-        digitalWrite(dirPinR, HIGH); //CW (forward dir)
-        if(takenStepR == 0){
-          digitalWrite(stepPinR, HIGH);
-          takenStepR++;
-        }
-        else if(takenStepR == 1){
-          digitalWrite(stepPinR, LOW);
-          takenStepR = 0;
-        }
-      }
-      else if(motorSpeedR > 0){
-        //backward pitch
-        digitalWrite(dirPinR, LOW); //CCW (backward dir)
-        if(takenStepR == 0){
-          digitalWrite(stepPinR, HIGH);
-          takenStepR++;
-        }
-        else if(takenStepR == 1){
-          digitalWrite(stepPinR, LOW);
-          takenStepR = 0;
-        }
-      }
-      break;
-    case FORWARD:
-      break;
-    case BACKWARD:
-      break;
-    case TURNL:
-      break;
-    case TURNR:
-      break;
-    case QUIT:
-      break;
-  }
-}
-
-void tickControlL(void) {
-  switch (lState) {
-    case INIT1:
-      if (1) {
-        lState = IDLE1;
-      }
-      break;
-    case IDLE1:
-      break;
-    case FORWARD1:
-      break;
-    case BACKWARD1:
-      break;
-    case TURNL1:
-      break;
-    case TURNR1:
-      break;
-    case QUIT1:
-      break;
-    // Add other states and their actions
-  }
-
-  switch(rState){
-    case INIT1:
-      break;
-    case IDLE1:
-      break;
-    case FORWARD1:
-      break;
-    case BACKWARD1:
-      break;
-    case TURNL1:
-      break;
-    case TURNR1:
-      break;
-    case QUIT1:
-      break;
-  }
-}
-
 void setup() {
   Serial.begin(115200);
-
+  myTimer.begin(balance, 20);
   Wire.begin();
 
   // Initialize MPU6050
@@ -201,12 +56,6 @@ void setup() {
   pinMode(stepPinR, OUTPUT);
   pinMode(dirPinL, OUTPUT);
   pinMode(stepPinL, OUTPUT);
-
-  // Initialize tasks
-  initializeTask();
-
-  // Start the timer
-  myTimer.begin(scheduleTask, PERIOD_GCD);
 }
 
 void measureOffsets() {
@@ -239,6 +88,32 @@ void measureOffsets() {
   Serial.print("Measured pitch offset: "); Serial.println(pitchOffset);
 }
 
+void balance(){
+  if(motorSpeedR < 0){
+    //forward pitch
+    digitalWrite(dirPinR, HIGH); //CW (forward dir)
+    if(takenStepR == 0){
+      digitalWrite(stepPinR, HIGH);
+      takenStepR++;
+    }
+    else if(takenStepR == 1){
+      digitalWrite(stepPinR, LOW);
+      takenStepR = 0;
+    }
+  }
+  else if(motorSpeedR > 0){
+    //backward pitch
+    digitalWrite(dirPinR, LOW); //CCW (backward dir)
+    if(takenStepR == 0){
+      digitalWrite(stepPinR, HIGH);
+      takenStepR++;
+    }
+    else if(takenStepR == 1){
+      digitalWrite(stepPinR, LOW);
+      takenStepR = 0;
+    }
+  }
+}
 
 void loop() {
   int16_t ax, ay, az;
@@ -258,10 +133,9 @@ void loop() {
   pitch -= pitchOffset;
 
   // Print tilt angles
-  //Serial.print(" Roll: "); Serial.print(roll); // Right (-) Left(+)
-  //Serial.print(" | Pitch: "); Serial.println(pitch); // Forward (-) Backward (+)
-
-  // delay(100);
+  Serial.print(" Roll: "); Serial.print(roll); // Right (-) Left(+)
+  Serial.print(" | Pitch: "); Serial.println(pitch); // Forward (-) Backward (+)
+  delay(100);
 
   currentAngle = pitch;
   // PID controller calculations
@@ -284,8 +158,4 @@ void loop() {
 
   delay(100);
   */
-
-  scheduleTask();
-  //while(!TimerFlag){}
-  //TimerFlag = 0;
 }
