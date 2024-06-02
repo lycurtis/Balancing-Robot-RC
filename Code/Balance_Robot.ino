@@ -1,22 +1,31 @@
-#include <MPU6050.h>
+#include <Adafruit_MPU6050.h>
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
 
-MPU6050 mpu; //create object "mpu"
+Adafruit_MPU6050 mpu; //create object "mpu"
 
 //Motor direction and step pins
-#define dirPinR 2; 
-#define stepPinR 3;
-#define dirPinL 4;
-#define stepPinL 5;
+#define dirPinR 2
+#define stepPinR 3
+#define dirPinL 4
+#define stepPinL 5
 
 #define stepsPerRevolution 200
+
+//Offset values
+#define accXOffset 0.32
+#define accYOffset -0.19
+#define accZOffset 7.76 
+#define gyroXOffset -0.06 
+#define gyroYOffset -0.03 
+#define gyroZOffset -0.03 
 
 //PID scalar constants
 float Kp = 0.0;
 float Ki = 0.0;
 float Kd = 0.0;
 
-float setPoint  = 0.0 //Desired angle (upright)
+float setPoint  = 0.0; //Desired angle (upright)
 
 //global variables necessary for PID control system (for later calculations)
 float currentAngle, error, prevError, proportional, integral, derivative, motorSpeedL, motorSpeedR;
@@ -24,33 +33,48 @@ float currentAngle, error, prevError, proportional, integral, derivative, motorS
 void setup() {
   Serial.begin(9600);
   Wire.begin(); //Initializes the I2C bus as a master
-  mpu.initialize();
+
+  //mpu.initialize();
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  Serial.println("MPU6050 Found!");
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
 
   //motor control pins
   pinMode(dirPinR, OUTPUT);
   pinMode(stepPinR, OUTPUT);
   pinMode(dirPinL, OUTPUT);
   pinMode(stepPinL, OUTPUT);
+
+
 }
 
 void loop() {
 
   // reading IMU data
-  int16_t ax, ay, az; //accerlation addresses
-  int16_t gx, gy, gz; //gyroscope addresses
+  sensors_event_t a, g, temp;
 
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz); //read raw accerlation and gyro measurements (dereference)
+  mpu.getEvent(&a, &g, &temp); //read raw acceleration and gyro measurements (dereference)
 
   // Display data
+  
   Serial.print("a/g:\t");
-  Serial.print(ax); Serial.print("\t");
-  Serial.print(ay); Serial.print("\t");
-  Serial.print(az); Serial.print("\t");
-  Serial.print(gx); Serial.print("\t");
-  Serial.print(gy); Serial.print("\t");
-  Serial.println(gz);
+  Serial.print(a.acceleration.x - accXOffset); Serial.print("\t");
+  Serial.print(a.acceleration.y - accYOffset); Serial.print("\t");
+  Serial.print(a.acceleration.z - accZOffset); Serial.print("\t");
+  Serial.print(g.gyro.x - gyroXOffset); Serial.print("\t");
+  Serial.print(g.gyro.y - gyroYOffset); Serial.print("\t");
+  Serial.println(g.gyro.z - gyroZOffset);
 
   delay(100);
+  
 
   //calculate currentAngle (simplified example: currentAngle = atan(ay, az) * 180 / PI;)
 
@@ -66,4 +90,3 @@ void loop() {
 
   prevError = error; //important to set prevError so on the next loop it remembers the previous error
 }
-
