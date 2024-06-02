@@ -2,7 +2,8 @@
 #include "MPU6050.h"
 #include <IntervalTimer.h>
 
-IntervalTimer myTimer;
+IntervalTimer pidTimer;
+IntervalTimer motorRTimer;
 
 MPU6050 mpu;
 
@@ -11,7 +12,6 @@ MPU6050 mpu;
 #define stepPinR 3
 #define dirPinL 4
 #define stepPinL 5
-
 
 // PID scalar constants
 float Kp = 10.0;
@@ -31,9 +31,8 @@ float pitchOffset = 0.0;
 
 void setup() {
   Serial.begin(115200);
-  myTimer.begin(balance, 20);
   Wire.begin();
-
+  
   // Initialize MPU6050
   Serial.println("Initializing MPU6050...");
   mpu.initialize();
@@ -56,6 +55,10 @@ void setup() {
   pinMode(stepPinR, OUTPUT);
   pinMode(dirPinL, OUTPUT);
   pinMode(stepPinL, OUTPUT);
+
+  // Start the timer to call the balance function every 10 000 microseconds = 10 ms (10 Hz)
+  pidTimer.begin(calcSpeedPID, 10000); 
+  motorRTimer.begin(motorControlPID, 1000);
 }
 
 void measureOffsets() {
@@ -77,8 +80,6 @@ void measureOffsets() {
 
     rollSum += roll;
     pitchSum += pitch;
-
-    //delay(10);
   }
 
   rollOffset = rollSum / numReadings;
@@ -88,34 +89,7 @@ void measureOffsets() {
   Serial.print("Measured pitch offset: "); Serial.println(pitchOffset);
 }
 
-void balance(){
-  if(motorSpeedR < 0){
-    //forward pitch
-    digitalWrite(dirPinR, HIGH); //CW (forward dir)
-    if(takenStepR == 0){
-      digitalWrite(stepPinR, HIGH);
-      takenStepR++;
-    }
-    else if(takenStepR == 1){
-      digitalWrite(stepPinR, LOW);
-      takenStepR = 0;
-    }
-  }
-  else if(motorSpeedR > 0){
-    //backward pitch
-    digitalWrite(dirPinR, LOW); //CCW (backward dir)
-    if(takenStepR == 0){
-      digitalWrite(stepPinR, HIGH);
-      takenStepR++;
-    }
-    else if(takenStepR == 1){
-      digitalWrite(stepPinR, LOW);
-      takenStepR = 0;
-    }
-  }
-}
-
-void loop() {
+void calcSpeedPID() {
   int16_t ax, ay, az;
   mpu.getAcceleration(&ax, &ay, &az);
 
@@ -132,11 +106,6 @@ void loop() {
   roll -= rollOffset;
   pitch -= pitchOffset;
 
-  // Print tilt angles
-  Serial.print(" Roll: "); Serial.print(roll); // Right (-) Left(+)
-  Serial.print(" | Pitch: "); Serial.println(pitch); // Forward (-) Backward (+)
-  delay(100);
-
   currentAngle = pitch;
   // PID controller calculations
   error = currentAngle - setPoint; // or setPoint - currentAngle (whichever gives you the correct interpretation of positive/negative)
@@ -149,13 +118,74 @@ void loop() {
   motorSpeedL = proportional + integral + derivative;
 
   prevError = error; // important to set prevError so on the next loop it remembers the previous error
+}
 
-  /*
-  Serial.print("Right Speed: ");
-  Serial.println(motorSpeedR);
-  Serial.print("Left Speed");
-  Serial.println(motorSpeedL);
+enum STATES_MOTORR {STEPHIGHR, STEPLOWR} rState = STEPHIGHR;
+enum STATES_MOTORL {STEPHIGHL, STEPLOWL} lState = STEPHIGHL;
 
-  delay(100);
-  */
+void motorControlPID(){
+  //right motor
+  switch(rState){
+    case STEPHIGHR:
+      if(1){
+        rState = STEPLOWR;
+      }
+      break;
+    case STEPLOWR:
+      if(1){
+        rState = STEPHIGHR;
+      }
+    default:
+      rState = STEPHIGHR;
+      break;
+  }
+  switch(rState){
+    case STEPHIGHR:
+      if(motorSpeedR < 0){
+        digitalWrite(dirPinR, HIGH);
+      }
+      else if(motorSpeedR > 0){
+        digitalWrite(dirPinR, LOW);
+      }
+      digitalWrite(stepPinR, HIGH);
+      break;
+    case STEPLOWR:
+      digitalWrite(stepPinR, LOW);
+      break;
+  }
+
+  //left motor
+  switch(lState){
+    case STEPHIGHL:
+      if(1){
+        lState = STEPLOWL;
+      }
+      break;
+    case STEPLOWL:
+      if(1){
+        lState = STEPHIGHL;
+      }
+    default:
+      lState = STEPHIGHL;
+      break;
+  }
+  switch(lState){
+    case STEPHIGHL:
+      if(motorSpeedL < 0){
+        digitalWrite(dirPinL, LOW);
+      }
+      else if(motorSpeedL > 0){
+        digitalWrite(dirPinL, HIGH);
+      }
+      digitalWrite(stepPinL, HIGH);
+      break;
+    case STEPLOWL:
+      digitalWrite(stepPinL, LOW);
+      break;
+  }
+}
+
+
+void loop() {
+  //Serial.println(currentAngle);
 }
