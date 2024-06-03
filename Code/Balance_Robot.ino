@@ -2,9 +2,11 @@
 #include "MPU6050.h"
 #include <IntervalTimer.h>
 
+//Tasks Declaration
 IntervalTimer pidTimer;
 IntervalTimer motorTimer;
 
+//creating object type MPU6050 named "mpu"
 MPU6050 mpu;
 
 // Motor direction and step pins
@@ -26,9 +28,14 @@ float currentAngle, error, prevError, proportional, integral, derivative, motorS
 int stepDelay = 0; //neded to control the speed of motor
 int direction = 0; //later used to check if robot is falling forward or backward
 
-const int numReadings = 500; //read 500 values to figure out offset for calibration
-float rollOffset = 0.0;
-float pitchOffset = 0.0; 
+//KNOWN OFFSET VALUES aX:-1582  aY:3043  aZ:1220 | gX:102 gY:52 gZ:62
+const int aXOffset = -1582;
+const int aYOffset = 3043;
+const int aZOffset = 1220;
+const int gXOffset = 102;
+const int gYOffset = 52;
+const int gZOffset = 62;
+
 
 void setup() {
   Serial.begin(115200); //baud rate 115200 for faster serial com
@@ -42,14 +49,13 @@ void setup() {
   Serial.println("Testing device connections...");
   Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
-  // Calibrate the MPU6050
-  Serial.println("Calibrating MPU6050...");
-  mpu.CalibrateAccel(6);
-  mpu.CalibrateGyro(6);
-  mpu.PrintActiveOffsets();
-
-  // Measure offsets
-  measureOffsets();
+  //compensate for offset (set offset)
+  mpu.setXAccelOffset(aXOffset);
+  mpu.setYAccelOffset(aYOffset);
+  mpu.setZAccelOffset(aZOffset);
+  mpu.setXGyroOffset(gXOffset);
+  mpu.setYGyroOffset(gYOffset);
+  mpu.setZGyroOffset(gZOffset);
 
   // Motor control pins
   pinMode(dirPinR, OUTPUT);
@@ -62,33 +68,6 @@ void setup() {
   motorTimer.begin(motorControlPID, 1000);
 }
 
-void measureOffsets() {
-  float rollSum = 0.0;
-  float pitchSum = 0.0;
-
-  for (int i = 0; i < numReadings; i++) {
-    int16_t ax, ay, az;
-    mpu.getAcceleration(&ax, &ay, &az);
-
-    // Convert raw values to G-force
-    float accelX = ax / 16384.0;
-    float accelY = ay / 16384.0;
-    float accelZ = az / 16384.0;
-
-    // Calculate tilt angles
-    float roll  = atan2(accelY, accelZ) * 180 / PI;
-    float pitch = atan2(-accelX, sqrt(accelY * accelY + accelZ * accelZ)) * 180 / PI;
-
-    rollSum += roll;
-    pitchSum += pitch;
-  }
-
-  rollOffset = rollSum / numReadings;
-  pitchOffset = pitchSum / numReadings;
-
-  Serial.print("Measured roll offset: "); Serial.println(rollOffset);
-  Serial.print("Measured pitch offset: "); Serial.println(pitchOffset);
-}
 
 void calcSpeedPID() {
   int16_t ax, ay, az;
@@ -103,11 +82,8 @@ void calcSpeedPID() {
   float roll  = atan2(accelY, accelZ) * 180 / PI;
   float pitch = atan2(-accelX, sqrt(accelY * accelY + accelZ * accelZ)) * 180 / PI;
 
-  // Apply offsets
-  roll -= rollOffset;
-  pitch -= pitchOffset;
-
   currentAngle = pitch;
+
   // PID controller calculations
   error = currentAngle - setPoint; // or setPoint - currentAngle (whichever gives you the correct interpretation of positive/negative)
   proportional = error * Kp;
@@ -192,7 +168,8 @@ void motorControlPID(){
 
 
 void loop() {
-  //Serial.println(currentAngle);
+  Serial.println(currentAngle);
   //Serial.println(motorSpeedR);
   //Serial.println(stepDelay);
+  delay(500);
 }
