@@ -14,7 +14,7 @@ MPU6050 mpu;
 #define stepPinL 5
 
 // PID scalar constants
-float Kp = 10.0;
+float Kp = 7.0;
 float Ki = 0.0;
 float Kd = 0.0;
 
@@ -23,7 +23,8 @@ float setPoint  = 0.0; // Desired angle (upright)
 // Global variables necessary for PID control system (for later calculations)
 float currentAngle, error, prevError, proportional, integral, derivative, motorSpeedL, motorSpeedR;
 
-int takenStepR = 0;
+int stepDelay = 0;
+int direction = 0;
 
 const int numReadings = 500;
 float rollOffset = 0.0;
@@ -118,6 +119,10 @@ void calcSpeedPID() {
   motorSpeedL = proportional + integral + derivative;
 
   prevError = error; // important to set prevError so on the next loop it remembers the previous error
+
+  direction = motorSpeedR;
+  stepDelay = map(abs(motorSpeedR), 0, 300, 1000, 400);
+  //motorRTimer.update(stepDelay);
 }
 
 enum STATES_MOTORR {STEPHIGHR, STEPLOWR} rState = STEPHIGHR;
@@ -141,10 +146,10 @@ void motorControlPID(){
   }
   switch(rState){
     case STEPHIGHR:
-      if(motorSpeedR < 0){
+      if(direction < 0){
         digitalWrite(dirPinR, HIGH);
       }
-      else if(motorSpeedR > 0){
+      else if(direction > 0){
         digitalWrite(dirPinR, LOW);
       }
       digitalWrite(stepPinR, HIGH);
@@ -171,10 +176,10 @@ void motorControlPID(){
   }
   switch(lState){
     case STEPHIGHL:
-      if(motorSpeedL < 0){
+      if(direction < 0){
         digitalWrite(dirPinL, LOW);
       }
-      else if(motorSpeedL > 0){
+      else if(direction > 0){
         digitalWrite(dirPinL, HIGH);
       }
       digitalWrite(stepPinL, HIGH);
@@ -188,4 +193,6 @@ void motorControlPID(){
 
 void loop() {
   //Serial.println(currentAngle);
+  //Serial.println(motorSpeedR);
+  Serial.println(stepDelay);
 }
