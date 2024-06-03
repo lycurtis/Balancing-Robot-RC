@@ -3,7 +3,7 @@
 #include <IntervalTimer.h>
 
 IntervalTimer pidTimer;
-IntervalTimer motorRTimer;
+IntervalTimer motorTimer;
 
 MPU6050 mpu;
 
@@ -18,20 +18,20 @@ float Kp = 7.0;
 float Ki = 0.0;
 float Kd = 0.0;
 
-float setPoint  = 0.0; // Desired angle (upright)
+float setPoint  = 0.0; // Desired angle (upright default)
 
 // Global variables necessary for PID control system (for later calculations)
 float currentAngle, error, prevError, proportional, integral, derivative, motorSpeedL, motorSpeedR;
 
-int stepDelay = 0;
-int direction = 0;
+int stepDelay = 0; //neded to control the speed of motor
+int direction = 0; //later used to check if robot is falling forward or backward
 
-const int numReadings = 500;
+const int numReadings = 500; //read 500 values to figure out offset for calibration
 float rollOffset = 0.0;
-float pitchOffset = 0.0;
+float pitchOffset = 0.0; 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); //baud rate 115200 for faster serial com
   Wire.begin();
   
   // Initialize MPU6050
@@ -59,7 +59,7 @@ void setup() {
 
   // Start the timer to call the balance function every 10 000 microseconds = 10 ms (10 Hz)
   pidTimer.begin(calcSpeedPID, 10000); 
-  motorRTimer.begin(motorControlPID, 1000);
+  motorTimer.begin(motorControlPID, 1000);
 }
 
 void measureOffsets() {
@@ -122,7 +122,7 @@ void calcSpeedPID() {
 
   direction = motorSpeedR;
   stepDelay = map(abs(motorSpeedR), 0, 300, 1000, 400);
-  //motorRTimer.update(stepDelay);
+  //motorTimer.update(stepDelay);
 }
 
 enum STATES_MOTORR {STEPHIGHR, STEPLOWR} rState = STEPHIGHR;
@@ -131,12 +131,12 @@ enum STATES_MOTORL {STEPHIGHL, STEPLOWL} lState = STEPHIGHL;
 void motorControlPID(){
   //right motor
   switch(rState){
-    case STEPHIGHR:
+    case STEPHIGHR: //PULSE HIGH
       if(1){
         rState = STEPLOWR;
       }
       break;
-    case STEPLOWR:
+    case STEPLOWR: //PULSE LOW
       if(1){
         rState = STEPHIGHR;
       }
@@ -146,16 +146,16 @@ void motorControlPID(){
   }
   switch(rState){
     case STEPHIGHR:
-      if(direction < 0){
-        digitalWrite(dirPinR, HIGH);
+      if(direction < 0){ //falling forward
+        digitalWrite(dirPinR, HIGH); //drive right motor CW (forward dir)
       }
-      else if(direction > 0){
-        digitalWrite(dirPinR, LOW);
+      else if(direction > 0){ //falling backward
+        digitalWrite(dirPinR, LOW); //drive right motor CCW (backward dir)
       }
-      digitalWrite(stepPinR, HIGH);
+      digitalWrite(stepPinR, HIGH); //pulse HIGH
       break;
     case STEPLOWR:
-      digitalWrite(stepPinR, LOW);
+      digitalWrite(stepPinR, LOW); //pulse LOW
       break;
   }
 
@@ -176,16 +176,16 @@ void motorControlPID(){
   }
   switch(lState){
     case STEPHIGHL:
-      if(direction < 0){
-        digitalWrite(dirPinL, LOW);
+      if(direction < 0){ //falling forward
+        digitalWrite(dirPinL, LOW); //drive left motor CCW (forward dir)
       }
-      else if(direction > 0){
-        digitalWrite(dirPinL, HIGH);
+      else if(direction > 0){ //falling backward
+        digitalWrite(dirPinL, HIGH); //drive left motor CW
       }
-      digitalWrite(stepPinL, HIGH);
+      digitalWrite(stepPinL, HIGH); //pulse HIGH
       break;
     case STEPLOWL:
-      digitalWrite(stepPinL, LOW);
+      digitalWrite(stepPinL, LOW); //pulse LOW
       break;
   }
 }
@@ -194,5 +194,5 @@ void motorControlPID(){
 void loop() {
   //Serial.println(currentAngle);
   //Serial.println(motorSpeedR);
-  Serial.println(stepDelay);
+  //Serial.println(stepDelay);
 }
