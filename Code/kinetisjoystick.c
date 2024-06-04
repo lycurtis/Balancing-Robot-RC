@@ -1,3 +1,4 @@
+/*
 **     Filename    : main.c
 **     Project     : PID balancing robot
 **     Processor   : MK64FN1M0VLL12
@@ -12,6 +13,7 @@
 **         No public methods
 **
 ** ###################################################################*/
+*/
 /*!
  ** @file main.c
  ** @version 01.01
