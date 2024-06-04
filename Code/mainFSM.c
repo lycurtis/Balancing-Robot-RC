@@ -33,10 +33,12 @@ void PIT0_IRQHandler(void) {
 }
 
 // ISR for GPIO interrupt for state machine 1
+/*
 void PORTA_IRQHandler(void) {
     PORTA->ISFR = 0xFFFFFFFF; // Clear interrupt flags
     gpioInterruptFlag1 = true;
 }
+*/
 
 // State transition function for state machine 1
 void tickFB(void) {
@@ -153,10 +155,12 @@ void PIT1_IRQHandler(void) {
 }
 
 // ISR for GPIO interrupt for state machine 2
+/*
 void PORTB_IRQHandler(void) {
     PORTB->ISFR = 0xFFFFFFFF; // Clear interrupt flags
     gpioInterruptFlag2 = true;
 }
+*/
 
 // State transition function for state machine 2
 void tickLR(void){ //501 rest val (left 0, right 1023)
@@ -347,6 +351,13 @@ void PIT_Init(void) {
 /*////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////*/
+uint16_t ADC_Read(){
+	
+}
+
+/*////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////*/
 // Main function
 int main(void) {
     // Initialize hardware
@@ -355,9 +366,9 @@ int main(void) {
 	
     // Enable interrupts
     NVIC_EnableIRQ(PIT0_IRQn);
-    NVIC_EnableIRQ(PORTA_IRQn);
+    //NVIC_EnableIRQ(PORTA_IRQn);
     NVIC_EnableIRQ(PIT1_IRQn);
-    NVIC_EnableIRQ(PORTB_IRQn);
+    //NVIC_EnableIRQ(PORTB_IRQn);
 
     while (1) { //loop function
 		// Read the raw values from the joystick
