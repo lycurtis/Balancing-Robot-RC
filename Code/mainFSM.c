@@ -351,8 +351,18 @@ void PIT_Init(void) {
 /*////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////*/
-uint16_t ADC_Read(){
-	
+uint16_t ADC_ReadFB(){
+	ADC0_SC1A = 0x00; //Write to SC1A to start conversion
+	while(ADC0_SC2 & ADC_SC2_ADACT_MASK); //conversion in process
+	while(!(ADC0_SC1A & ADC_SC1_COCO_MASK)); //Until conversion is complete
+	return ADC0_RA; //ADC conversion result for ADC0
+}
+
+uint16_t ADC_ReadLR(){
+	ADC1_SC1A = 0x00; //Write to SC1A to start conversion
+	while(ADC1_SC2 & ADC_SC2_ADACT_MASK); //conversion in process
+	while(!(ADC1_SC1A & ADC_SC1_COCO_MASK)); //Until conversion is complete
+	return ADC1_RA; //ADC conversion result for ADC0
 }
 
 /*////////////////////////////////////////////////////////////////////////////////////
@@ -376,8 +386,8 @@ int main(void) {
 		joyL = analogRead(joystickLPin);
 		joyR = analogRead(joystickRPin);
 		*/
-		joyL = ADC_Read(JOYSTICK_L_PIN);
-        joyR = ADC_Read(JOYSTICK_R_PIN);
+	joyL = ADC_ReadFB();
+        joyR = ADC_ReadLR();
 		
 		// Perform tasks based on current states
         tickFB();
