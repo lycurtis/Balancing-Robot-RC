@@ -362,7 +362,7 @@ uint16_t ADC_ReadLR(){
 	ADC1_SC1A = 0x00; //Write to SC1A to start conversion
 	while(ADC1_SC2 & ADC_SC2_ADACT_MASK); //conversion in process
 	while(!(ADC1_SC1A & ADC_SC1_COCO_MASK)); //Until conversion is complete
-	return ADC1_RA; //ADC conversion result for ADC0
+	return ADC1_RA; //ADC conversion result for ADC1
 }
 
 /*////////////////////////////////////////////////////////////////////////////////////
@@ -388,7 +388,8 @@ int main(void) {
 		*/
 	joyL = ADC_ReadFB();
         joyR = ADC_ReadLR();
-		
+	printf(joyL);
+	printf(joyR);
 		// Perform tasks based on current states
         tickFB();
         tickLR();
