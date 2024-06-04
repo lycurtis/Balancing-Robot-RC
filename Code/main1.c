@@ -40,20 +40,60 @@
 #include "IO_Map.h"
 #include "PDD_Includes.h"
 #include "Init_Config.h"
+#inclue "MK64F12.h"
 /* User includes (#include below this line is not maintained by Processor Expert) */
 
+uint16_t readJoystick(uint8_t channelGroup, uint8_t channel) {
+	uint16_t result;
+	ADC1_Measure(True);
+}
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
 {
   /* Write your local variable definition here */
-
+  LDD_TDeviceData* adcData;
+  LDD_TError error;
+  ADC1_TResultData adcValue[ADC1_CHANNEL_COUNT]; //array to store ADC values
+  LDD_TData spiData[2] //Array to store SPI Data
+  
   /*** Processor Expert internal initialization. DON'T REMOVE THIS CODE!!! ***/
   PE_low_level_init();
   /*** End of Processor Expert internal initialization.                    ***/
 
   /* Write your code here */
-  /* For example: for(;;) { } */
+  adcData = ADC1_Init(NULL);
+  for(;;){
+	  /* Start ADC measurement */
+    error = ADC1_StartSingleMeasurement(adcData);
+    if (error != ERR_OK) {
+      // Handle error
+    }
+
+    /* Wait for the measurement to complete */
+    while (ADC1_GetMeasurementCompleteStatus(adcData) == FALSE) {
+      // Busy wait
+    }
+
+    /* Get ADC values */
+    error = ADC1_GetMeasuredValues(adcData, (LDD_TData *)adcValue);
+    if (error != ERR_OK) {
+      // Handle error
+    }
+
+    /* Prepare data for SPI transmission */
+    spiData[0] = (adcValue[0] >> 8) & 0xFF; // High byte of first channel
+    spiData[1] = adcValue[0] & 0xFF;        // Low byte of first channel
+
+    /* Send data via SPI */
+    error = SPI0_SendBlock(spiData, sizeof(spiData)); //sends the data via SPI
+    if (error != ERR_OK) {
+      // Handle error
+    }
+
+    /* Add delay if necessary */
+    Cpu_Delay100US(10); // Delay for 1 ms
+  }
 
   /*** Don't write any code pass this line, or it will be deleted during code generation. ***/
   /*** RTOS startup code. Macro PEX_RTOS_START is defined by the RTOS component. DON'T MODIFY THIS CODE!!! ***/
