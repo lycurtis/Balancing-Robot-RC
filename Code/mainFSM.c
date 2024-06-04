@@ -7,7 +7,6 @@
 /////////////////////////////////////////////////////////////////////////////////////*/
 //GLOBAL VARIABLES AND DEFINITIONS
 #define PIT_PERIOD_US 10000U //10 ms period (10,000 us = 10ms)
-//define joystick pins
 
 float setPoint = 0.0;
 
