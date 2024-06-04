@@ -9,14 +9,14 @@ IntervalTimer motorTimer;
 //creating object type MPU6050 named "mpu"
 MPU6050 mpu;
 
-// Motor direction and step pins
+// Motor dirThreshold and step pins
 #define dirPinR 2
 #define stepPinR 3
 #define dirPinL 4
 #define stepPinL 5
 
 // PID scalar constants
-float Kp = 7.0;
+float Kp = 150.0;
 float Ki = 0.0;
 float Kd = 0.0;
 
@@ -26,7 +26,7 @@ float setPoint  = 0.0; // Desired angle (upright default)
 float currentAngle, error, prevError, proportional, integral, derivative, motorSpeedL, motorSpeedR;
 
 int stepDelay = 0; //neded to control the speed of motor
-int direction = 0; //later used to check if robot is falling forward or backward
+int dirThreshold = 0; //later used to check if robot is falling forward or backward
 
 //KNOWN OFFSET VALUES aX:-1582  aY:3043  aZ:1220 | gX:102 gY:52 gZ:62
 const int aXOffset = -1582;
@@ -96,9 +96,26 @@ void calcSpeedPID() {
 
   prevError = error; // important to set prevError so on the next loop it remembers the previous error
 
-  direction = motorSpeedR;
-  stepDelay = map(abs(motorSpeedR), 0, 300, 1000, 400);
-  //motorTimer.update(stepDelay);
+  dirThreshold = motorSpeedR;
+  if(abs(motorSpeedR) > 1500){
+    stepDelay = abs(motorSpeedR) - 1500;
+  }
+  else{
+    stepDelay = 1500 - abs(motorSpeedR);
+  }
+  //stepDelay = map(abs(motorSpeedR), 0, 500, 1500, 400);
+  if(stepDelay > 1000){
+    stepDelay = 1200;
+    
+  }
+  else if(stepDelay > 800){
+    stepDelay = 800;
+    
+  }
+  else{
+    stepDelay = 500;
+  }
+  motorTimer.update(stepDelay);
 }
 
 enum STATES_MOTORR {STEPHIGHR, STEPLOWR} rState = STEPHIGHR;
@@ -122,10 +139,10 @@ void motorControlPID(){
   }
   switch(rState){
     case STEPHIGHR:
-      if(direction < 0){ //falling forward
+      if(dirThreshold < -650){ //falling forward
         digitalWrite(dirPinR, HIGH); //drive right motor CW (forward dir)
       }
-      else if(direction > 0){ //falling backward
+      else if(dirThreshold > 650){ //falling backward
         digitalWrite(dirPinR, LOW); //drive right motor CCW (backward dir)
       }
       digitalWrite(stepPinR, HIGH); //pulse HIGH
@@ -152,10 +169,10 @@ void motorControlPID(){
   }
   switch(lState){
     case STEPHIGHL:
-      if(direction < 0){ //falling forward
+      if(dirThreshold < -650){ //falling forward
         digitalWrite(dirPinL, LOW); //drive left motor CCW (forward dir)
       }
-      else if(direction > 0){ //falling backward
+      else if(dirThreshold > 650){ //falling backward
         digitalWrite(dirPinL, HIGH); //drive left motor CW
       }
       digitalWrite(stepPinL, HIGH); //pulse HIGH
@@ -168,8 +185,8 @@ void motorControlPID(){
 
 
 void loop() {
-  Serial.println(currentAngle);
+  //Serial.println(currentAngle);
   //Serial.println(motorSpeedR);
   //Serial.println(stepDelay);
-  delay(500);
+  //delay(500);
 }
