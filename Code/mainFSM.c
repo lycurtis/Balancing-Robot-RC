@@ -373,4 +373,5 @@ int main(void) {
         tickLR();
         
     }
+	return 0;
 }
