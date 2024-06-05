@@ -93,7 +93,7 @@ int main(void)
 	  
 	  printf("joyL: %d\t joyR:%d\n", joyL, joyR);
 	  len = sprintf(buffer, "joyL: %d\t joyR: %d\n", joyL, joyR);
-	  SM1_SendBlock(SM1_DeviceData, &buffer, len);
+	  SM1_SendBlock(SM1_DeviceData, &buffer, len); //SPI
 	  for(delay = 0; delay < 300000; delay++); //delay
 	  
   }
