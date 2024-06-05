@@ -43,7 +43,7 @@
 #include "Init_Config.h"
 #include "MK64F12.h"
 /* User includes (#include below this line is not maintained by Processor Expert) */
-unsigned char write[512];
+unsigned char buffer[32]; //default from lab 6 is write[512];
 
 unsigned short ADC_ReadFB(void){
     ADC0_SC1A = 0x00; //Write to SC1A to start conversion
@@ -76,6 +76,7 @@ int main(void)
   SIM_SCGC6 |= SIM_SCGC6_ADC0_MASK; /*Enable Port ADC0_DP0 Clock Gate Control*/
   ADC0_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
   ADC0_SC1A = 0x1F; //Disable the module, ADCH = 11111
+  
   SIM_SCGC3 |= SIM_SCGC3_ADC1_MASK; /*Enable Port ADC1_DP1 Clock Gate Control*/
   ADC1_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
   ADC1_SC1A = 0x1F; //Disable the module, ADCH = 11111
@@ -90,9 +91,9 @@ int main(void)
       joyL = ADC_ReadFB();
       joyR = ADC_ReadLR();
 	  
-	  printf("Joystick value \tFB: %4d\t LR: %4d\n", joyL, joyR);
-	  len = sprintf(write, "Joystick value \tFB: %4d\t LR: %4d\n", joyL, joyR);
-	  SM1_SendBlock(SM1_DeviceData, &write, len);
+	  printf("joyL: %d\t joyR:%d\n", joyL, joyR);
+	  len = sprintf(buffer, "joyL: %d\t joyR: %d\n", joyL, joyR);
+	  SM1_SendBlock(SM1_DeviceData, &buffer, len);
 	  for(delay = 0; delay < 300000; delay++); //delay
 	  
   }
