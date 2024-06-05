@@ -1,4 +1,4 @@
-/* ###################################################################
+	/* ###################################################################
 **     Filename    : main.c
 **     Project     : K64F_Joystick_ADC
 **     Processor   : MK64FN1M0VLL12
@@ -43,9 +43,7 @@
 #include "Init_Config.h"
 #include "MK64F12.h"
 /* User includes (#include below this line is not maintained by Processor Expert) */
-
-int joyL;
-int joyR;
+unsigned char write[512];
 
 unsigned short ADC_ReadFB(void){
     ADC0_SC1A = 0x00; //Write to SC1A to start conversion
@@ -66,23 +64,37 @@ int main(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
 {
   /* Write your local variable definition here */
-	SIM_SCGC6 |= SIM_SCGC6_ADC0_MASK; /*Enable Port ADC0_DP0 Clock Gate Control*/
-	ADC0_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
-	ADC0_SC1A = 0x1F; //Disable the module, ADCH = 11111
-
-	SIM_SCGC3 |= SIM_SCGC3_ADC1_MASK; /*Enable Port ADC1_DP1 Clock Gate Control*/
-	ADC1_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
-	ADC1_SC1A = 0x1F; //Disable the module, ADCH = 11111
+    
   /*** Processor Expert internal initialization. DON'T REMOVE THIS CODE!!! ***/
   PE_low_level_init();
   /*** End of Processor Expert internal initialization.                    ***/
 
   /* Write your code here */
-
+  int16_t joyL;
+  int16_t joyR;
+  
+  SIM_SCGC6 |= SIM_SCGC6_ADC0_MASK; /*Enable Port ADC0_DP0 Clock Gate Control*/
+  ADC0_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
+  ADC0_SC1A = 0x1F; //Disable the module, ADCH = 11111
+  SIM_SCGC3 |= SIM_SCGC3_ADC1_MASK; /*Enable Port ADC1_DP1 Clock Gate Control*/
+  ADC1_CFG1 = 0x0C; //16 bits ADC; bus CLOCK
+  ADC1_SC1A = 0x1F; //Disable the module, ADCH = 11111
+  
+  uint32_t delay;
+  int len;
+  LDD_TDeviceData *SM1_DeviceData;
+  SM1_DeviceData = SM1_Init(NULL);
+  
   /* For example: for(;;) { } */
   for(;;){
       joyL = ADC_ReadFB();
       joyR = ADC_ReadLR();
+	  
+	  printf("Joystick value \tFB: %4d\t LR: %4d\n", joyL, joyR);
+	  len = sprintf(write, "Joystick value \tFB: %4d\t LR: %4d\n", joyL, joyR);
+	  SM1_SendBlock(SM1_DeviceData, &write, len);
+	  for(delay = 0; delay < 300000; delay++); //delay
+	  
   }
   /*** Don't write any code pass this line, or it will be deleted during code generation. ***/
   /*** RTOS startup code. Macro PEX_RTOS_START is defined by the RTOS component. DON'T MODIFY THIS CODE!!! ***/
