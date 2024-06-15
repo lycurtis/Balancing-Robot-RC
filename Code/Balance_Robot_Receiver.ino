@@ -3,7 +3,6 @@
 #include <RF24_config.h>
 #include <nRF24L01.h>
 #include <printf.h>
-#include <SPI.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,12 +59,6 @@ void setup() {
   radio.openReadingPipe(0, address);
   radio.setPALevel(RF24_PA_LOW);
   radio.startListening();
-
-  pinMode(MISO, OUTPUT); // Have to send on master in so it set as output
-  SPCR |= _BV(SPE); // Turn on SPI in slave mode
-  indx = 0; // Buffer empty
-  process = false;
-  SPI.attachInterrupt(); // Turn on interrupt
 
   //setup code for the balancing robot
   Wire.begin();
