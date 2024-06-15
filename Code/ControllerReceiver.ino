@@ -1,4 +1,7 @@
-//This file is to be combined onto the Teensy 4.1 in combination with the Balance_Robot.ino to receive the processed setPoint from the joystick input.
+// This file is to be combined onto the Teensy 4.1 in combination with the Balance_Robot.ino to receive the processed setPoint from the joystick input.
+// Additionally the receivers main functionality is now to just receive the setPOint and process it on the Teensy
+// The state machines meant to process the joystick input from the K-64F into a setPoint were implemented into the ControllerTransmitter.ino
+// The transmitter now handles the functionality of receiving data from the K-64F and converting those values into a setPoint to be sent to the Receiver + Teensy (Balance_Robot.ino)
 
 #include <RF24.h>
 #include <RF24_config.h>
