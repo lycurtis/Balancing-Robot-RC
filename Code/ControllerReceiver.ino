@@ -1,3 +1,5 @@
+//This file is to be combined onto the Teensy 4.1 in combination with the Balance_Robot.ino to receive the processed setPoint from the joystick input.
+
 #include <RF24.h>
 #include <RF24_config.h>
 #include <nRF24L01.h>
@@ -74,7 +76,7 @@ void loop(void) {
       Serial.println(joyR);
       */
       
-
+      /*
       // Determine the setPointL variable based on the joyL integer value
       if (joyL > -16900 && joyL < -16000) {
         setPointL = 0.0;
@@ -104,6 +106,7 @@ void loop(void) {
       Serial.print(setPointL);
       Serial.print(" | setPointR: ");
       Serial.println(setPointR);
+      */
 
     } else {
       Serial.println("Labeled data not found in buffer.");
