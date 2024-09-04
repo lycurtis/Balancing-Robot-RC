@@ -13,8 +13,10 @@ const byte address[6] = "00001";
 volatile int joyFB = 0;
 volatile int joyLR = 0;
 
+volatile char dataToSend[4] = {0, 0, 0, 0}; //UP DOWN LEFT RIGHT
+
 void setup() {
-  Serial.begin(11520);
+  Serial.begin(115200);
 
   //Timer1 Initialize
   TCCR1A = 0; //reset entire TCCR1A (Timer/Counter Control Register A) to 0
@@ -49,27 +51,48 @@ void tickJoy(void){
   if (joyFB > 512 + 50) { // Forward
     digitalWrite(ledForwardPin, HIGH);
     digitalWrite(ledBackwardPin, LOW);
+    dataToSend[0] = 1; // UP
+    dataToSend[1] = 0; // DOWN
   } else if (joyFB < 512 - 50) { // Backward
     digitalWrite(ledForwardPin, LOW);
     digitalWrite(ledBackwardPin, HIGH);
-  } else { // Center
+    dataToSend[0] = 0; // UP
+    dataToSend[1] = 1; // DOWN
+  } else { // Center/Default
     digitalWrite(ledForwardPin, LOW);
     digitalWrite(ledBackwardPin, LOW);
+    dataToSend[0] = 0; // UP
+    dataToSend[1] = 0; // DOWN
   }
 
   if (joyLR > 512 + 50) { // Right
     digitalWrite(ledRightPin, HIGH);
     digitalWrite(ledLeftPin, LOW);
+    dataToSend[2] = 0; // LEFT
+    dataToSend[3] = 1; // RIGHT
   } else if (joyLR < 512 - 50) { // Left
     digitalWrite(ledRightPin, LOW);
     digitalWrite(ledLeftPin, HIGH);
-  } else { // Center
+    dataToSend[2] = 1; // LEFT
+    dataToSend[3] = 0; // RIGHT
+  } else { // Center/Default
     digitalWrite(ledRightPin, LOW);
     digitalWrite(ledLeftPin, LOW);
+    dataToSend[2] = 0; // LEFT
+    dataToSend[3] = 0; // RIGHT
   }
 }
 void loop() {
   tickJoy();
+
+  //radio.write(&dataToSend, sizeof(dataToSend));
+  int success = radio.write(&dataToSend, sizeof(dataToSend));
+  if (success) {
+    Serial.println("Data sent successfully");
+  } else {
+    Serial.println("Data sending failed");
+  }
+
 }
 
 //keep ISR short and minimal 
