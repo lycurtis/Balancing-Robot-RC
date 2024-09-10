@@ -6,6 +6,24 @@ int calibrationNum;
 float accX, accY, accZ;
 float angleRoll, anglePitch;
 
+//Define the predicted angles and uncertanties 
+float kalmanAngleRoll = 0, kalmanUncertaintyAngleRoll = 2*2; //1st assume that initial state is on a leveled surface so 0 degs
+float kalmanAnglePitch = 0, kalmanUncertaintyAnglePitch = 2*2; //however there are uncertanties therefore we set the standard dev. to be 2 deg
+
+float kalman1DOutput[]={0,0}; //Initialize the output of the filter 
+
+//function that calculates the predicted angle and uncertainty using the Kalman equations
+void kalman_1d(float kalmanState, float kalmanUncertainty, float kalmanInput, float kalmanMeasurement){
+  kalmanState = kalmanState + 0.004*kalmanInput;
+  kalmanUncertainty = kalmanUncertainty + 0.004*0.004*4*4;
+  float kalmanGain = kalmanUncertainty*1/(1*kalmanUncertainty + 3*3);
+  kalmanState = kalmanState + kalmanGain*(kalmanMeasurement-kalmanState);
+  kalmanUncertainty = (1 - kalmanGain)*kalmanUncertainty;
+  //kalman filter output
+  kalman1DOutput[0] = kalmanState;
+  kalman1DOutput[1] = kalmanUncertainty;
+}
+
 void gyro_signals(void){
   Wire.beginTransmission(0x68); //Start I2C communication 
   
@@ -56,7 +74,7 @@ void gyro_signals(void){
   anglePitch = -atan(accX/sqrt(accY*accY+accZ*accZ))*1/(3.142/180);
 }
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
   Wire.setClock(400000); //Set clock speed of I2C to 400kHz (comes from component spec)
   Wire.begin();
   delay(250); //must give the mpu6050 time to start
@@ -110,5 +128,21 @@ void loop(){
   Serial.print(" Pitch angle [deg] = ");
   Serial.println(anglePitch);
   */
+  Serial.print(-4); // To freeze the lower limit
+  Serial.print(" ");
+  Serial.print(4); // To freeze the upper limit
+  Serial.print(" ");
 
+  //Start the Kalman Filter
+  kalman_1d(kalmanAngleRoll, kalmanUncertaintyAngleRoll, rateRoll, angleRoll); //Roll
+  kalmanAngleRoll = kalman1DOutput[0];
+  kalmanUncertaintyAngleRoll = kalman1DOutput[1];
+  kalman_1d(kalmanAnglePitch, kalmanUncertaintyAnglePitch, ratePitch, anglePitch); //Pitch
+  kalmanAnglePitch = kalman1DOutput[0];
+  kalmanUncertaintyAnglePitch = kalman1DOutput[1];
+
+  Serial.print("Roll angle [deg] = ");
+  Serial.print(kalmanAngleRoll);
+  Serial.print(" Pitch angle [deg] = ");
+  Serial.println(kalmanAnglePitch);
 }
