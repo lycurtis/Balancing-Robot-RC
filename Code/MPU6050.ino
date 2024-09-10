@@ -1,13 +1,15 @@
 #include <Wire.h>
 
 float rateRoll, ratePitch, rateYaw;
-
+float offsetRoll, offsetPitch, offsetYaw;
+int calibrationNum;
 float accX, accY, accZ;
 float angleRoll, anglePitch;
 
 void gyro_signals(void){
+  Wire.beginTransmission(0x68); //Start I2C communication 
+  
   //Switch on the low pass filter
-  Wire.beginTransmission(0x68);
   Wire.write(0x1A);
   Wire.write(0x05);
   Wire.endTransmission();
@@ -29,9 +31,10 @@ void gyro_signals(void){
 
   //Configure the gyroscope output and pull rotation rate measurements from the sensor
   Wire.beginTransmission(0x68);
-  Wire.write(0x1B);
-  Wire.write(0x8);
+  Wire.write(0x1B); //Set sensitivity scale factor
+  Wire.write(0x8); //set senstivity scale factor
   Wire.endTransmission();
+  //Access registers storing gyro measurements
   Wire.beginTransmission(0x68);
   Wire.write(0x43);
   Wire.endTransmission();
@@ -54,12 +57,25 @@ void gyro_signals(void){
 }
 void setup(){
   Serial.begin(9600);
-  Wire.setClock(400000);
+  Wire.setClock(400000); //Set clock speed of I2C to 400kHz (comes from component spec)
   Wire.begin();
+  delay(250); //must give the mpu6050 time to start
   Wire.beginTransmission(0x68);
-  Wire.write(0x6B);
+  Wire.write(0x6B); //Start the gyro in power mode
   Wire.write(0x00);
   Wire.endTransmission();
+
+  //Calibrate the gyroscope to minimize offset errors
+  for(calibrationNum = 0; calibrationNum < 2000; calibrationNum++){
+    gyro_signals();
+    offsetRoll += rateRoll;
+    offsetPitch += ratePitch;
+    offsetYaw += rateYaw;
+    delay(1);
+  }
+  offsetRoll /= 2000;
+  offsetPitch /= 2000;
+  offsetYaw /= 2000;
 }
 
 void loop(){
@@ -74,9 +90,25 @@ void loop(){
   Serial.println(accZ);
   */
 
+  rateRoll -= offsetRoll;
+  ratePitch -= offsetPitch;
+  rateYaw -= offsetYaw;
+
+  /*
+  Serial.print("Roll rate [deg/s] = ");
+  Serial.print(rateRoll);
+  Serial.print(" Pitch rate [deg/s] = ");
+  Serial.print(ratePitch);
+  Serial.print(" Yaw Rate [deg/s] = ");
+  Serial.println(rateYaw);
+  delay(50);
+  */
+
+  /*
   Serial.print("Roll angle [deg] = ");
   Serial.print(angleRoll);
   Serial.print(" Pitch angle [deg] = ");
   Serial.println(anglePitch);
+  */
 
 }
