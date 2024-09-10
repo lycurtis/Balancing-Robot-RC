@@ -128,9 +128,9 @@ void loop(){
   Serial.print(" Pitch angle [deg] = ");
   Serial.println(anglePitch);
   */
-  Serial.print(-4); // To freeze the lower limit
+  Serial.print(-10); // To freeze the lower limit
   Serial.print(" ");
-  Serial.print(4); // To freeze the upper limit
+  Serial.print(10); // To freeze the upper limit
   Serial.print(" ");
 
   //Start the Kalman Filter
@@ -141,8 +141,16 @@ void loop(){
   kalmanAnglePitch = kalman1DOutput[0];
   kalmanUncertaintyAnglePitch = kalman1DOutput[1];
 
+  /*
+  //Serial Monitor View
   Serial.print("Roll angle [deg] = ");
   Serial.print(kalmanAngleRoll);
   Serial.print(" Pitch angle [deg] = ");
+  Serial.println(kalmanAnglePitch);
+  */
+
+  //Serial Plotter View
+  Serial.print(kalmanAngleRoll);
+  Serial.print(" ");
   Serial.println(kalmanAnglePitch);
 }
