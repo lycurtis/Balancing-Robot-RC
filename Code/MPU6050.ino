@@ -48,7 +48,7 @@ void gyro_signals(void){
   rateYaw = (float)gyroZ/65.5;
 
   //Convert the acceleratometer measurements into physical values
-  accX = (float)accXLSB/4096 - 0.04;
+  accX = (float)accXLSB/4096 - 0.06;
   accY = (float)accYLSB/4096 + 0.01;
   accZ = (float)accZLSB/4096 + 0.18; 
 
@@ -100,23 +100,16 @@ void setup(){
   offsetYaw /= 2000;
 }
 
-void loop(){
-  gyro_signals();
-
-  /*
+void print_accXYZ(void){
   Serial.print("Acc X [g] = ");
   Serial.print(accX);
   Serial.print(" Acc Y [g] = ");
   Serial.print(accY);
   Serial.print(" Acc Z [g] = ");
   Serial.println(accZ);
-  */
+}
 
-  rateRoll -= offsetRoll;
-  ratePitch -= offsetPitch;
-  rateYaw -= offsetYaw;
-
-  /*
+void print_gyroXYZ(void){
   Serial.print("Roll rate [deg/s] = ");
   Serial.print(rateRoll);
   Serial.print(" Pitch rate [deg/s] = ");
@@ -124,18 +117,40 @@ void loop(){
   Serial.print(" Yaw Rate [deg/s] = ");
   Serial.println(rateYaw);
   delay(50);
-  */
+}
 
-  /*
+void print_unfilteredAngles(void){
   Serial.print("Roll angle [deg] = ");
   Serial.print(angleRoll);
   Serial.print(" Pitch angle [deg] = ");
   Serial.println(anglePitch);
-  */
+}
+
+void print_kalmanMonitor(void){
+  //Serial Monitor View
+  Serial.print("Roll angle [deg] = ");
+  Serial.print(kalmanAngleRoll);
+  Serial.print(" Pitch angle [deg] = ");
+  Serial.println(kalmanAnglePitch);
+}
+
+void print_kalmanPlotter(void){
   Serial.print(-10); // To freeze the lower limit
   Serial.print(" ");
   Serial.print(10); // To freeze the upper limit
   Serial.print(" ");
+  Serial.print(kalmanAngleRoll);
+  Serial.print(" ");
+  Serial.println(kalmanAnglePitch);
+}
+
+void run_mpu(void){
+  gyro_signals();
+
+  rateRoll -= offsetRoll;
+  ratePitch -= offsetPitch;
+  rateYaw -= offsetYaw;
+
 
   //Start the Kalman Filter
   kalman_1d(kalmanAngleRoll, kalmanUncertaintyAngleRoll, rateRoll, angleRoll); //Roll
@@ -144,17 +159,9 @@ void loop(){
   kalman_1d(kalmanAnglePitch, kalmanUncertaintyAnglePitch, ratePitch, anglePitch); //Pitch
   kalmanAnglePitch = kalman1DOutput[0];
   kalmanUncertaintyAnglePitch = kalman1DOutput[1];
+}
 
-  /*
-  //Serial Monitor View
-  Serial.print("Roll angle [deg] = ");
-  Serial.print(kalmanAngleRoll);
-  Serial.print(" Pitch angle [deg] = ");
-  Serial.println(kalmanAnglePitch);
-  */
-
-  //Serial Plotter View
-  Serial.print(kalmanAngleRoll);
-  Serial.print(" ");
-  Serial.println(kalmanAnglePitch);
+void loop(){
+  run_mpu();
+  //print_kalmanPlotter();
 }
