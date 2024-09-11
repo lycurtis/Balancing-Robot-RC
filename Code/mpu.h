@@ -4,7 +4,11 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-void kalman_1d(float kalmanState, float kalmanUncertainty, float kalmanInput, float kalmanMeasurement);
+//declar global kalman variables as extern so they are available across files
+extern float kalmanAngleRoll;
+extern float kalmanAnglePitch;
+
+void kalman_1d(float &kalmanState, float &kalmanUncertainty, float kalmanInput, float kalmanMeasurement);
 void gyro_signals(void);
 void mpu_begin();
 void print_accXYZ(void);
