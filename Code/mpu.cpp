@@ -13,7 +13,7 @@ float kalmanAnglePitch = 0, kalmanUncertaintyAnglePitch = 2*2; //however there a
 float kalman1DOutput[]={0,0}; //Initialize the output of the filter 
 
 //function that calculates the predicted angle and uncertainty using the Kalman equations
-void kalman_1d(float kalmanState, float kalmanUncertainty, float kalmanInput, float kalmanMeasurement){
+void kalman_1d(float &kalmanState, float &kalmanUncertainty, float kalmanInput, float kalmanMeasurement){
   kalmanState = kalmanState + 0.004*kalmanInput;
   kalmanUncertainty = kalmanUncertainty + 0.004*0.004*4*4;
   float kalmanGain = kalmanUncertainty*1/(1*kalmanUncertainty + 3*3);
