@@ -1,6 +1,5 @@
 #include "mpu.h"
-
-float setPoint = 0.0; //Desired angle (upright default)
+#include "pid.h"
 
 void setup(){
   Serial.begin(115200);
@@ -9,4 +8,6 @@ void setup(){
 
 void loop(){
   run_mpu();
+  //Serial.println(calculate_PID(kalmanAnglePitch));
+  print_kalmanPlotter();
 }
